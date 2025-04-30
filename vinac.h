@@ -4,16 +4,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>     // Para usar o Stat
-//  #include <unistd.h>    // Para usar funções como access(), read(), write(), close(), etc.
+#include <unistd.h>    // Para usar funções como access(), read(), write(), close(), etc.
 #include <sys/types.h>    // Para usar os types que o Stat tem, tipo o off_t
 #include <time.h>         // Para usar funções como ctime(), localtime(), strftime(), etc.
 #include "lista.h"
 
 
 struct diretorio {
-  struct lista_t lista [1000];  // Lista de membros
-  struct lista_t **lista2;      // Ponteiro para a lista que contém todos os memebros
-
+  struct lista_t *lista2;      // Ponteiro para a lista que contém todos os memebros
   char *buffer[];               // Ponteiro pra vetor de char, eu mudo dinamicamente o tamanho dele de acordo com o arquivo
 };
 
@@ -29,6 +27,10 @@ struct membro {
 };
 
 // Arquive vai ser uma lista de structs
+
+void comprime ();
+
+void descomprime ();
 
 void insere ();           // Flag: ip
 
