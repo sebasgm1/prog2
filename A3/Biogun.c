@@ -1,4 +1,4 @@
-// Compilação: gcc Biogun.c Enviroments.c -o BG $(pkg-config allegro-5 allegro_main-5 allegro_font-5 allegro_image-5 allegro_ttf-5 --libs --cflags)
+// Compilação: gcc Biogun.c Enviroments.c Player.c Joystick.c -o BG $(pkg-config allegro-5 allegro_main-5 allegro_font-5 allegro_image-5 allegro_ttf-5 --libs --cflags)
 
 #include <stdio.h>
 #include <allegro5/allegro5.h>														//Biblioteca base do Allegro
@@ -28,14 +28,20 @@ int main(){
 	}
 
 	// Inicia a tela de início do jogo
-	int select = Inicio (disp);
+	int select = 1;
 
-	if (select == 1) { // ENTER -> Começa o jogo
-		Jogo (disp);
-	}
-	if (select == 2) { // LOAD
+	while (select != 0) {
+		if (select == 1) { // Tela de início do jogo
+			select = Inicio (disp);
+		}
+		if (select == 2) { // Tela do jogo
+			select = Jogo (disp);
+		}
+		if (select == 3) { // LOAD
 
+		}	
 	}
+	
 
 
 	al_destroy_display(disp);														//Destrutor da tela

@@ -3,7 +3,7 @@
 
 #include <allegro5/allegro5.h>														//Biblioteca base do Allegro
 #include "Joystick.h"
-#include "Joystick.h"
+
 
 
 struct player {
@@ -21,9 +21,13 @@ struct player {
 };
 
 // Cria o jogador e retorna o ponteiro
-struct player *create_player ();
+struct player *player_create ();
 
-// struct player *move_player ();
+// Move o jogador de acordo com o evento
+void move_player (ALLEGRO_KEYBOARD_STATE *e, struct player *p, int Ylimit);
+
+// Verifica se o jogador pode se mover
+void can_move (struct player *p, int LimitY);
 
 // struct player *player_shot ();
 

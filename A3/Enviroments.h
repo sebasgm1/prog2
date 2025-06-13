@@ -12,7 +12,7 @@ void Allegro_init ();
 
 int Inicio (ALLEGRO_DISPLAY* disp);
 
-void Jogo (ALLEGRO_DISPLAY* disp);
+int Jogo (ALLEGRO_DISPLAY* disp);
 
 // void Fim (ALLEGRO_DISPLAY* disp);
 
