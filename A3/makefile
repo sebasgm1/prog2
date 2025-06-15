@@ -13,7 +13,7 @@ ALLEGRO_CFLAGS = $(shell $(PKG_CONFIG) allegro-5 allegro_main-5 allegro_font-5 a
 ALLEGRO_LIBS   = $(shell $(PKG_CONFIG) allegro-5 allegro_main-5 allegro_font-5 allegro_image-5 allegro_ttf-5 --libs)
 
 # Arquivos-fonte do projeto
-SRCS = Biogun.c Enviroments.c Player.c Joystick.c
+SRCS = Biogun.c Enviroments.c Player.c Joystick.c Pistol.c Bullet.c
 
 # Nome do executável de saída
 TARGET = BG

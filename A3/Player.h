@@ -24,7 +24,7 @@ struct player {
 struct player *player_create ();
 
 // Move o jogador de acordo com o evento
-void move_player (ALLEGRO_KEYBOARD_STATE *e, struct player *p, int Ylimit);
+void move_player (struct joystick *element, ALLEGRO_EVENT event);
 
 // Verifica se o jogador pode se mover
 void can_move (struct player *p, int LimitY);

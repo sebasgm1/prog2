@@ -7,7 +7,7 @@ struct joystick *create_joystick () {
   struct joystick *j = malloc (sizeof (struct joystick));
   if (!j) {
     perror ("Erro no malloc do create_joystick\n");
-    exit (0);
+    return 0;
   }
 
   // Inicializa os botões do joystick

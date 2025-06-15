@@ -5,72 +5,79 @@
 #include "Player.h"
 
 
-void move_player (ALLEGRO_KEYBOARD_STATE *e, struct player *p,int Ylimit) {
-  if (al_key_down(e, ALLEGRO_KEY_W)) p->y -= p->vel;
-
-  if (al_key_down(e, ALLEGRO_KEY_A)) p->x -= p->vel;
-
-  if (al_key_down(e, ALLEGRO_KEY_S) && p->y < Ylimit) p->y += p->vel;
-
-  if (al_key_down(e, ALLEGRO_KEY_D)) p->x += p->vel;
-} 
 
 
-// void move_player (struct joystick *element, ALLEGRO_EVENT event) {
+void move_player (struct joystick *element, ALLEGRO_EVENT event) {
+  if (!element) {
+    perror ("Não consegui mover player\n");
+    return;
+  }
 
-//   // Move W A S D
-// 	if (event.keyboard.keycode == ALLEGRO_KEY_W) {
-//     element->up = 1;
-// 	}
-//   else element->up = 0;
+  // Eventos de teclado %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-//   if (event.keyboard.keycode == ALLEGRO_KEY_A) {
-//     element->left = 1;
-//   }
-//   else element->left = 0;
+  if (event.type == ALLEGRO_EVENT_KEY_DOWN) {       // Presiona a telca
+    
+    // Ativa W A S D ou RUN
+    switch (event.keyboard.keycode) {
+      case ALLEGRO_KEY_W: element->up = 1; break;
+      case ALLEGRO_KEY_A: element->left = 1; break;
+      case ALLEGRO_KEY_S: element->down = 1; break;
+      case ALLEGRO_KEY_D: element->right = 1; break;
+      case ALLEGRO_KEY_LSHIFT: element->run = 1; break; // Corre!
+    }
+  }
 
-//   if (event.keyboard.keycode == ALLEGRO_KEY_S) {
-//     element->down = 1;
-//   }
-//   else element->down = 0;
+  if (event.type == ALLEGRO_EVENT_KEY_UP) {       // Solta a tecla
 
-//   if (event.keyboard.keycode == ALLEGRO_KEY_D) {
-//     element->right = 1;
-//   }
-//   else element->right = 0;
+    // Desativa W A S D ou RUN
+    switch (event.keyboard.keycode) {         
+      case ALLEGRO_KEY_W: element->up = 0; break;
+      case ALLEGRO_KEY_A: element->left = 0; break;
+      case ALLEGRO_KEY_S: element->down = 0; break;
+      case ALLEGRO_KEY_D: element->right = 0; break;
+      case ALLEGRO_KEY_LSHIFT: element->run = 0; break; // Corre!
+    }
+  }
 
+  // Eventos de mouse %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-//   // Decide se ele vai correr ou não
-//   if (event.keyboard.keycode == ALLEGRO_KEY_LSHIFT) {
-//     element->run = 1;
-//   }
-//   else element->run = 0;
+  // ATIRA
+  if (event.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
 
+    element->fire = 1;
+  }
 
-//   // Atirar!
-//   if (event.mouse.button == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN) {
-//     element->fire = 1;
-//   }
-//   else element->fire = 0;
+  // Para de atirar
+  if (event.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
 
-// }
+    element->fire = 0;
+  }
+
+  
+
+}
 
 void can_move (struct player *p, int LimitY) {
 
+  float vel = p->vel;
+  if (p->joystick->run)
+    vel = vel * 1.7;
+
+
   if (p->joystick->right) {
-    p->x += p->vel;
+    p->x += vel;
   }
   if (p->joystick->left) {
-    p->x -= p->vel;
+    p->x -= vel;
   }
 
   if (p->joystick->up) {
-    p->y -= p->vel;
+    p->y -= vel;
   }
 
   // Não deixa passar do chão
   if (p->joystick->down && p->y < LimitY) {
-    p->y += p->vel;
+    p->y += vel;
   }
 
 }
@@ -81,7 +88,7 @@ struct player *player_create () {
   struct player* p = malloc (sizeof (struct player));
   if (!p) {
     perror ("Erro no malloc do create_player\n");
-    exit (0);
+    return NULL;
   }
 
   // Posição inicial do player
@@ -90,12 +97,13 @@ struct player *player_create () {
 
   // Status de vida e velocidade do player
   p->life = 10;
-  p->vel = 2.0;
+  p->vel = 5.0;
 
   p->joystick = create_joystick ();
+  if (!p->joystick) return NULL;
 
   // Crio a sprite do meu jogador
-  p->sprite = al_load_bitmap ("/home/dsbd/prog2/A3/sprites/Psprite1.png");
+  p->sprite = al_load_bitmap ("/Users/sebas/Documents/Prog2/A3/sprites/player.png");
 
   return p;
 }
