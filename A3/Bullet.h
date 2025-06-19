@@ -13,7 +13,7 @@ struct bullet {
 };
 
 // x e y: definem a coordenada aonde a bullet, spawna
-struct bullet *bullet_create (long x, long y, unsigned char trajectory, struct buller *next, ALLEGRO_BITMAP *sprite);
+struct bullet *bullet_create (long x, long y, unsigned char trajectory, struct bullet *next, ALLEGRO_BITMAP *sprite);
 
 void bullet_move (struct bullet *b);
 

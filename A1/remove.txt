@@ -1,0 +1,162 @@
+  long end = 0, offset = 0;
+  long int maior_buff = 0;
+  unsigned int ori_sz;   // Quantidade de membros atualmente
+  struct member *old_tbl, *new_tbl;
+
+  // Se o número de membros for menor que 1, remove todos
+  if (!targets || n < 1) {
+    printf ("Tem certeza que quer remover todos os membros?\n");
+    printf ("  s: Sim\n");
+    printf ("  n: Não\n");
+
+    char aux = 0;
+    scanf ("%c", &aux);
+    if (aux == 's') {
+      ftruncate (fileno(archive), 8);
+      fseek (archive, 4, SEEK_SET);
+      unsigned int a = 0;
+      fwrite (&a, sizeof a, 1, archive);
+      rewind (archive);
+
+      printf ("Removeu tudo\n");
+    }
+    return;
+  }
+
+  // Lê o número da quantidade de itens que tem dentro do archive
+  fseek (archive, 4, SEEK_SET);
+  if (fread (&ori_sz, sizeof ori_sz, 1, archive) != 1) {
+    perror ("Erro ao ler o inteiro no inicion do arquivo\n");
+    return;
+  }
+
+  if (ori_sz == 0) {
+    printf ("Não tem membros para remover\n");
+    return;
+  }
+
+  // Aloca um vetor com os membros antigos e preenche eles
+  if (ori_sz) {
+    old_tbl = malloc (sizeof (struct member) * ori_sz);
+    if (!old_tbl) {
+      perror ("Erro no malloc de old_tbl\n");
+      return;
+    }
+
+    fseek (archive, 8, SEEK_SET);
+    fread (old_tbl, sizeof (struct member), ori_sz, archive);
+  }
+
+  // Procuro qual seria o membro com o maior tamanho pra fazer o buffer (vou usar no MoveMember)
+  for (unsigned int i = 0; i < ori_sz; i++) {
+    if (old_tbl[i].tam_atual > maior_buff)
+      maior_buff = old_tbl[i].tam_atual;
+  }
+
+  // Guarda o endereço do fim para truncar lá depois
+  fseek (archive, 0, SEEK_END);
+  end = ftell (archive);
+
+  unsigned int rem_mem = 0;   // Número de membros removidos (nem sempre todos os membros que pedem para ser removidos estão no archive)
+
+  // É nesse for que são movidos os arquivos binários, o diretório permanece inalterado
+  // Vai pegar cada posição do vetor de structs e dizer se é aquele membro ou não
+  // i: indice de qual binário está sendo analisado
+  for (unsigned int i = 0; i < ori_sz; i++) {
+    // j: o indice do membro do target
+    // diffrent: flag pra saber ser os nomes são diferentes ou não
+    unsigned int j = 0, diffrent = 1;
+    while (j < n && diffrent) {
+      diffrent = strcmp (targets[j], old_tbl[i].nome);    // Se retornar 0, as strings são iguais, dai sai do laço
+      j++;
+    }
+    j--;  // Número certo do indice
+
+    // Se achou o target, sobrescreve movendo todos os outros
+    if (diffrent == 0 && old_tbl[i].UID != 0) { 
+      offset = old_tbl[i].tam_atual;    // Quanto que cada  binário vai se mover pra esquerda
+      old_tbl[i].UID = 0;   // Marcação que foi removido
+      rem_mem++;            // Removeu +1
+
+      // K começa desde o próximo membro depois do target
+      // Esse for move todos os binários sobreescrevendo o arquivo target
+      for (unsigned int k = i + 1; k < ori_sz; k++) {
+        // Move cada membro para trás
+        MoveMember (archive, old_tbl[k].offset, old_tbl[k].tam_atual, maior_buff, old_tbl[k].offset - offset);
+        old_tbl[k].offset -= offset;
+      }
+
+      // Todos os arquivos já foram movidos, agora precisa tirar um lixo de arquivo duplicado lá do final
+      // No caso em que o target for o último, a remoção dele vai ser tratada aqui
+      ftruncate (fileno(archive), end - offset);
+
+      // Guarda o novo endereço do fim (depois do truncamento)
+      fseek (archive, 0, SEEK_END);
+      end = ftell (archive);
+    }
+  }
+
+  // A novo tamanho do vetor de membros
+  unsigned int new_sz = ori_sz - rem_mem;
+  
+  // Aloca a nova tabela para ser preenchida como os membros que permaneceram
+  new_tbl = malloc (sizeof (struct member) * new_sz);
+  if (!new_tbl) {
+    perror ("Erro no malloc de new_tbl\n");
+    return;
+  }
+
+  // i: indice da tabela nova
+  // j: indice da tabela antiga
+  // k: indice do target que eu estou comparando
+  unsigned int j = 0;
+  // unsigned int remove;        // Flag que controla se remove ou não
+
+  // Aqui neste for eu vou preencher a nova tabela
+  for (unsigned int i = 0; i < ori_sz; i++) {
+    if (old_tbl[i].UID != 0) {    // Essa marcação no UID foi feita no for de cima aonde eu removi os aquivos
+      new_tbl[j] = old_tbl[i];
+      j++;
+    }
+  }
+
+  maior_buff = 0;
+  // Procuro qual seria o membro com o maior tamanho pra fazer o buffer (vou usar no MoveMember)
+  for (unsigned int i = 0; i < new_sz; i++) {
+    if (new_tbl[i].tam_atual > maior_buff)
+      maior_buff = new_tbl[i].tam_atual;
+  }
+
+  // Daqui pra frente eu vou mover os membros offset bytes para a esquerda
+  // Eu quero remover o número de membros está sobrando
+  offset = rem_mem * sizeof (struct member);
+
+  // Guarda o endereço do fim para truncar lá depois
+  fseek (archive, 0, SEEK_END);
+  end = ftell (archive);
+
+  // Move todos os binários para a esquerda (sobreescrevendo o diretório antigo) e atualiza o offset deles
+  for (unsigned int i = 0; i < new_sz; i++) {
+    MoveMember (archive, new_tbl[i].offset, new_tbl[i].tam_atual, maior_buff, new_tbl[i].offset - offset);
+    new_tbl[i].offset -= offset;
+  }
+
+  // Todos os arquivos já foram movidos, agora precisa tirar um lixo de arquivo duplicado lá do final
+  // No caso em que o target for o último, a remoção dele vai ser tratada aqui
+  ftruncate (fileno(archive), end - offset);
+
+  // Sobrescrevo a nova tabela
+  fseek (archive, 8, SEEK_SET);
+  fwrite (new_tbl, sizeof (struct member), new_sz, archive);
+  
+  // Libera as memórias alocadas
+  free (old_tbl);
+  old_tbl = NULL;
+  free (new_tbl);
+  new_tbl = NULL;
+  
+  // Escreve o novo número de membros presentes no diretório
+  fseek (archive, 4, SEEK_SET);
+  fwrite (&new_sz, sizeof (unsigned int), 1, archive);
+
+  rewind (archive); 

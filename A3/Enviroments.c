@@ -2,14 +2,16 @@
 #include "Player.h"
 
 
+
+
 // O limite do chão minimo
 #define FLOOR_LIMIT 220
 
 
 int Inicio (ALLEGRO_DISPLAY* disp) {
 
-	ALLEGRO_FONT *font = al_load_ttf_font("/Users/sebas/Documents/Prog2/A3/fontes/Pixelmax/Pixelmax-Regular.otf", 40, 0);									//Carrega uma fonte padrão para escrever na tela (é bitmap, mas também suporta adicionar fontes ttf
-	ALLEGRO_BITMAP *inicio = al_load_bitmap("/Users/sebas/Documents/Prog2/A3/sprites/Inicio.png");
+	ALLEGRO_FONT *font = al_load_ttf_font("/home/dsbd/prog2/A3/fontes/Pixelmax/Pixelmax-Regular.otf", 40, 0);									//Carrega uma fonte padrão para escrever na tela (é bitmap, mas também suporta adicionar fontes ttf
+	ALLEGRO_BITMAP *inicio = al_load_bitmap("/home/dsbd/prog2/A3/sprites/Inicio.png");
 	ALLEGRO_TIMER *timer = al_create_timer (1.0 / 60.0);
 	ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue ();
 
@@ -90,10 +92,51 @@ int Inicio (ALLEGRO_DISPLAY* disp) {
 	
 }
 
+int witch_sprite (struct player *p) {
+	if (!p || !p->sprite) {
+		fprintf(stderr, "Erro: ponteiro nulo no witch_sprite\n");
+		return -1;
+	}
+
+	// Parado
+	int num_sprite = 0;
+
+	if (p->joystick->right && p->joystick->left) {
+		num_sprite = 0;
+	} else if (p->joystick->run) {
+		num_sprite = 1;	// Rungun
+	} else if (p->joystick->up) {
+		num_sprite = 4;	// Jump
+	} else if (p->joystick->down) {
+		num_sprite = 5;	// Downgun
+	} else if (p->joystick->fire) {
+		num_sprite = 3;	// Rungun
+	} else if (p->joystick->left) {
+		num_sprite = 1;	// Run1
+	} else if (p->joystick->right) {
+		num_sprite = 1;	// Run2
+	} else if (p->joystick->up && p->joystick->fire) {
+		num_sprite = 4;	// Jumpgun
+	} else if (p->joystick->down && p->joystick->fire) {
+		num_sprite = 5;	// Downgun
+	} else {
+		num_sprite = 0;	// Stand
+	}
+
+	return num_sprite;
+
+} 
+
+
+
+
 int Jogo (ALLEGRO_DISPLAY* disp) {
 	ALLEGRO_TIMER *timer = al_create_timer (1.0 / 60.0);
 	ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue ();
-	ALLEGRO_BITMAP *cenario = al_load_bitmap ("/Users/sebas/Documents/Prog2/A3/sprites/fase1.png");
+	ALLEGRO_BITMAP *cenario = al_load_bitmap ("/home/dsbd/prog2/A3/sprites/fase1.png");
+
+	enum Direction {right , left};
+	enum Sprite {stand, run1, run2, rungun, jump, downgun, jumpgun};
 
 	if (timer == NULL || queue == NULL || cenario == NULL) {
 		fprintf(stderr, "Erro ao carregar a fonte ou bitmap\n");
@@ -113,8 +156,10 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 	ALLEGRO_EVENT event;		// Estrutura onde os eventos vão ser armazenados à medida que são capturados da queue.
 
 	int sair = 0;						// Flag que fala quando eu vou sair ou não
+	float linha = 0, coluna = 0;
+	int dir = 0;	// Direction
+	int num_sprite = 0;	// Sprite que vai ser desenhado
 
-	// tamanho da sprite 34x45
 
 	while (!sair) {
 		// Espera até que algum evento aconteça (tecla, timer ou fechar janela).
@@ -128,8 +173,36 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 				al_draw_bitmap (cenario, 0, 0, 0);
 				can_move (p, FLOOR_LIMIT);	// Verifica se o player PODE se mover e move ele, ou não
 				if (p->sprite) {
-					al_draw_bitmap (p->sprite, p->x, p->y, 0);
-					// al_draw_bitmap_region (p->sprite, 15 *(al_get_bitmap_width(p->sprite)/25), 8 * (al_get_bitmap_height(p->sprite)/9) p->x, p->y, );
+					if (p->joystick->left) {		// Se o joystick estiver pressionado pra direita
+						dir = left;		// Direção é direita
+					}
+					else if (p->joystick->right) {	// Se o joystick estiver pressionado pra esquerda
+						dir = right;			// Direção é esquerda
+					}
+
+					num_sprite = witch_sprite (p);
+
+					if (num_sprite == 2)
+						num_sprite = 1;		// Reseta o número do sprite,4
+					else if (num_sprite == 1)
+						num_sprite = 2;		// Reseta o número do sprite,	
+					
+					coluna =  ((num_sprite * al_get_bitmap_width(p->sprite) / 5));	// Divide a largura da imagem pelo número de colunas
+					linha = (dir * (al_get_bitmap_height(p->sprite) / 2));	// Divide a altura da imagem pelo número de linhas
+
+					// al_draw_bitmap (p->sprite, p->x, p->y, 0);
+					al_draw_scaled_bitmap (
+						p->sprite, 
+						coluna, linha, 
+						440, 525,
+						p->x, p->y, 
+						220, 262.5, 
+						0);
+				
+				
+				
+				
+				
 				}
 				al_flip_display ();
 				break;

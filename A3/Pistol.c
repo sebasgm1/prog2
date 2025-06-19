@@ -13,7 +13,7 @@ struct pistol* pistol_create(){																				//Implementação da função
 
 struct bullet* pistol_shot(unsigned short x, unsigned short y, unsigned char trajectory, struct pistol *gun, ALLEGRO_BITMAP *bullet_sprite){			//Implementação da função "pistol_shot"
 	
-	struct bullet *new_bullet = bullet_create(x, y, trajectory, gun->shots, bullet_sprite);									//Cria uma nova instância de projétil a ser disparado
+	struct bullet *new_bullet = (struct bullet*) bullet_create(x, y, trajectory, gun->shots, bullet_sprite);									//Cria uma nova instância de projétil a ser disparado
 	if (!new_bullet) return NULL;																		//Verifica o sucesso da alocação de memória; retorna NULL em caso de falha
 	return new_bullet;																					//Retorna uma nova instância de projétil
 }

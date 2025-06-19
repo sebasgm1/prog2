@@ -5,7 +5,7 @@
 
 
 // Talvez adicionar um ponteiro pra sprite?
-struct bullet *bullet_create (long x, long y, unsigned char trajectory, struct buller *next, ALLEGRO_BITMAP *sprite) {
+struct bullet *bullet_create (long x, long y, unsigned char trajectory, struct bullet *next, ALLEGRO_BITMAP *sprite) {
 
     struct bullet *b = malloc (sizeof (struct bullet));
     if (!b) return NULL;

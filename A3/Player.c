@@ -92,8 +92,12 @@ struct player *player_create () {
   }
 
   // Posição inicial do player
+  // p->x = 30.0;
+  // p->y = 220.0;
+
   p->x = 30.0;
-  p->y = 220.0;
+  p->y = 0.0;
+
 
   // Status de vida e velocidade do player
   p->life = 10;
@@ -103,7 +107,7 @@ struct player *player_create () {
   if (!p->joystick) return NULL;
 
   // Crio a sprite do meu jogador
-  p->sprite = al_load_bitmap ("/Users/sebas/Documents/Prog2/A3/sprites/player.png");
+  p->sprite = al_load_bitmap ("/home/dsbd/prog2/A3/sprites/player440x525.png");
 
   return p;
 }

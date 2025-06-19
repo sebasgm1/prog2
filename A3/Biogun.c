@@ -29,8 +29,7 @@ int main(){
 
 	// Inicia a tela de início do jogo
 	int select = 1;
-
-	while (select != 0) {
+	while (select != 0) {														//Enquanto o valor de select for diferente de 0, o programa continuará rodando
 		if (select == 1) { // Tela de início do jogo
 			select = Inicio (disp);
 		}

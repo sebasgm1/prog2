@@ -1,0 +1,95 @@
+Arquivador com suporte a compressão
+  um programa que
+  salva em sequência uma coleção de arquivos (denominados membros), planos
+  ou comprimidos, dentro de outro arquivo (denominado archive) cuja
+  estrutura permite recuperar os arquivos originais individualment
+
+
+  -r : remove os membros indicados de archive;
+    Se não indicar quais membros, remove todos ou não remove nada?
+      eu acho menos arriscado não remover nada e printar uma mensagem na tela escrito, tem certeza que vc quer excluir todos? sim ou não
+
+
+DÚVIDAS
+  O que é UID? de um membro do archive
+    número sequencial que não se repete
+  O que significa (offset a partir do início)? o que é um offset
+    quantos bytes de offset está do endereço do início do diretório para aquele arquivo
+  Como eu posso entender a entropia aplicada ao meu código?
+  
+Arquive seria um nomedoarquivo.vc
+
+
+Algoritmo de compressão vem de graça, já 
+
+lz: lampel ziv => https://www.youtube.com/watch?v=nImdPZv3kbM&t=23s
+
+Como eu posso entender a entropia aplicada ao meu código?
+
+
+
+Padronização
+  1024 para nome de arquivo
+  -m NULL nome.txt (para adicionar no inico do archive)
+  LZ_compress: no pior caso declare o vetor de saída o DOBRO do vetor de entrada pra comprirmir
+
+
+Criem TADs pra dizer tipo: essa TAD controla o archive, essa controla os membros
+
+Aprenda a fazer makefiles: https://makefiletutorial.com/
+
+BUGS CONHECIDOS
+  se eu conhecer um bug que tá lá no seu arquivo, ESCREVE
+  e se vc souber pq tá lá, escreve tbm
+
+
+MAKEFILE  do The Boys ===================================
+
+# makefile The Boys
+# Carlos Maziero - DINF/UFPR, 2024/2
+
+CC      = gcc
+CFLAGS  = -Wall -Wextra -Werror -g -std=c99
+LDLIBS  = -lm
+MAIN    = theboys
+ENTREGA = $(MAIN)
+
+# lista de arquivos de cabeçalho (a completar)
+HDR = fila.h fprio.h conjunto.h entidades.h eventos.h
+
+# lista de arquivos-objeto (a completar)
+# não inclua conjunto.o, senão ele será removido com "make clean"
+OBJ = fila.o fprio.o theboys.o entidades.o eventos.o
+
+# construir o executável
+$(MAIN): $(MAIN).o $(OBJ) conjunto.o
+
+# construir os arquivos-objeto (a completar)
+$(MAIN).o: $(MAIN).c 
+
+# construir os TADs
+fila.o:  fila.c fila.h
+fprio.o: fprio.c fprio.h
+entidades.o: entidades.c entidades.h
+eventos.o: eventos.c eventos.h
+
+# executar
+run: $(MAIN)
+	./$(MAIN)
+
+# testar no Valgrind
+valgrind: $(MAIN)
+	valgrind --leak-check=full --track-origins=yes ./$(MAIN)
+
+# gerar arquivo TGZ para entregar
+tgz: clean
+	-mkdir -p /tmp/$(USER)/$(ENTREGA)
+	chmod 0700 /tmp/$(USER)/$(ENTREGA)
+	cp *.c *.h *.o makefile /tmp/$(USER)/$(ENTREGA)
+	tar czvf $(ENTREGA).tgz -C /tmp/$(USER) $(ENTREGA)
+	rm -rf /tmp/$(USER)
+	@echo "Arquivo $(ENTREGA).tgz criado para entrega"
+
+# limpar arquivos temporários
+clean:
+	rm -f *~ $(OBJ) $(MAIN) /tmp/$(USER)/$(ENTREGA) $(ENTREGA).tgz
