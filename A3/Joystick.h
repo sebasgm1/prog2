@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <allegro5/allegro5.h>														//Biblioteca base do Allegro
+#include <allegro5/allegro_primitives.h>
 
 struct joystick {																													//Definição da estrutura de um controle 
 	unsigned char right;																											//Botão de movimentação à direta 

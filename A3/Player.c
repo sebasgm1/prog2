@@ -4,7 +4,12 @@
 #include "Joystick.h"
 #include "Player.h"
 
+#define FLOOR_LIMIT 220
+#define LEFT_LIMIT 100
+#define RIGHT_LIMIT 860
 
+#define GRAVITY 1
+#define Y_VELOCITY 15
 
 
 void move_player (struct joystick *element, ALLEGRO_EVENT event) {
@@ -60,6 +65,7 @@ void move_player (struct joystick *element, ALLEGRO_EVENT event) {
 void can_move (struct player *p, int LimitY) {
 
   float vel = p->vel;
+
   if (p->joystick->run)
     vel = vel * 1.7;
 
@@ -71,12 +77,10 @@ void can_move (struct player *p, int LimitY) {
     p->x -= vel;
   }
 
-  if (p->joystick->up) {
-    p->y -= vel;
-  }
+  
 
   // Não deixa passar do chão
-  if (p->joystick->down && p->y < LimitY) {
+  if (p->joystick->down && p->y_size < LimitY) {
     p->y += vel;
   }
 
@@ -96,7 +100,10 @@ struct player *player_create () {
   // p->y = 220.0;
 
   p->x = 30.0;
-  p->y = 0.0;
+  p->y = 220.0;
+
+  p->x_size = 220.0;       // largura da hitbox
+  p->y_size = 262.5;       // altura da hitbox
 
 
   // Status de vida e velocidade do player

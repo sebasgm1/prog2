@@ -2,6 +2,9 @@
 #define __BULLET__
 
 #include <allegro5/allegro5.h>  //Biblioteca base do Allegro
+
+
+
 #define BULLET_SPEED 10
 
 struct bullet {

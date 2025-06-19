@@ -9,8 +9,8 @@ CC = gcc
 
 # Comando pkg-config para obter flags de compilação e linkagem do Allegro
 PKG_CONFIG = pkg-config
-ALLEGRO_CFLAGS = $(shell $(PKG_CONFIG) allegro-5 allegro_main-5 allegro_font-5 allegro_image-5 allegro_ttf-5 --cflags)
-ALLEGRO_LIBS   = $(shell $(PKG_CONFIG) allegro-5 allegro_main-5 allegro_font-5 allegro_image-5 allegro_ttf-5 --libs)
+ALLEGRO_CFLAGS = $(shell $(PKG_CONFIG) allegro-5 allegro_main-5 allegro_font-5 allegro_image-5 allegro_ttf-5 allegro_primitives-5 --cflags)
+ALLEGRO_LIBS   = $(shell $(PKG_CONFIG) allegro-5 allegro_main-5 allegro_font-5 allegro_image-5 allegro_ttf-5 allegro_primitives-5 --libs)
 
 # Arquivos-fonte do projeto
 SRCS = Biogun.c Enviroments.c Player.c Joystick.c Pistol.c Bullet.c

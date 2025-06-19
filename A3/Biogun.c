@@ -6,7 +6,7 @@
 #include <allegro5/allegro_ttf.h>									// Fonte TTF
 #include <allegro5/allegro_image.h>  								// Para usar al_load_bitmap e al_init_image_addon
 #include <allegro5/allegro_native_dialog.h> 						// Para exibir mensagens de erro, se necessário
-
+#include <allegro5/allegro_primitives.h>
 
 
 #include "Player.h"
