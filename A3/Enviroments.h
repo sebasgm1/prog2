@@ -8,7 +8,7 @@
 #include <allegro5/allegro_image.h>  								// Para usar al_load_bitmap e al_init_image_addon
 
 
-void Allegro_init ();
+// void Allegro_init ();
 
 int Inicio (ALLEGRO_DISPLAY* disp);
 

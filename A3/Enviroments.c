@@ -3,22 +3,11 @@
 
 
 
-// Tamanho do display é 960, 540
-// O limites do chão, parede esqueda e parede direita
-#define FLOOR_LIMIT 220
-#define LEFT_LIMIT 100
-#define RIGHT_LIMIT 860
-
-#define GRAVITY 1
-#define Y_VELOCITY 17
-
-
-
 
 int Inicio (ALLEGRO_DISPLAY* disp) {
 
-	ALLEGRO_FONT *font = al_load_ttf_font("/home/dsbd/prog2/A3/fontes/Pixelmax/Pixelmax-Regular.otf", 40, 0);									//Carrega uma fonte padrão para escrever na tela (é bitmap, mas também suporta adicionar fontes ttf
-	ALLEGRO_BITMAP *inicio = al_load_bitmap("/home/dsbd/prog2/A3/sprites/Inicio.png");
+	ALLEGRO_FONT *font = al_load_ttf_font("/Users/sebas/Documents/Prog2/A3/fontes/Pixelmax/Pixelmax-Regular.otf", 40, 0);									//Carrega uma fonte padrão para escrever na tela (é bitmap, mas também suporta adicionar fontes ttf
+	ALLEGRO_BITMAP *inicio = al_load_bitmap("/Users/sebas/Documents/Prog2/A3/sprites/Inicio.png");
 	ALLEGRO_TIMER *timer = al_create_timer (1.0 / 60.0);
 	ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue ();
 
@@ -99,58 +88,8 @@ int Inicio (ALLEGRO_DISPLAY* disp) {
 	
 }
 
-int wich_sprite (struct player *p) {
 
-	if (!p || !p->sprite) {
-		fprintf(stderr, "Erro: ponteiro nulo no witch_sprite\n");
-		return -1;
-	}
-
-	// Parado
-	int num_sprite = 0;
-
-	if (p->joystick->right && p->joystick->left) {
-		num_sprite = 0;
-	} else if (p->joystick->run) {
-		num_sprite = 1;	// Rungun
-	} else if (p->joystick->up && !p->joystick->fire) {
-		num_sprite = 4;	// Jump
-	} else if (p->joystick->down) {
-		num_sprite = 5;	// Downgun
-	} else if (p->joystick->fire && !p->joystick->up ) {
-		num_sprite = 3;	// Rungun
-	} else if (p->joystick->left && !p->joystick->up && !p->joystick->fire) {
-		num_sprite = 1;	// Run1
-	} else if (p->joystick->right && !p->joystick->up && !p->joystick->fire) {
-		num_sprite = 1;	// Run2
-	} else if (p->joystick->up && p->joystick->fire) {
-		num_sprite = 6;	// Jumpgun
-	} else if (p->joystick->down && p->joystick->fire) {
-		num_sprite = 5;	// Downgun
-	} else {
-		num_sprite = 0;	// Stand
-	}
-
-	return num_sprite;
-
-} 
-
-int direction (struct player *p) {
-	if (!p || !p->joystick) {
-		fprintf(stderr, "Erro: ponteiro nulo no direction\n");
-		return -1;
-	}
-
-	if (p->joystick->right) {
-		return 0; // Direita
-	} else if (p->joystick->left) {
-		return 1; // Esquerda
-	}
-	return 0; // Parado
-}
-
-void draw_hitbox (struct player *p) {
-
+void draw_hitbox (struct player *p, int down) {
 
     if (!p) {
         perror ("Erro ao desenhar a hitbox do player\n");
@@ -162,25 +101,32 @@ void draw_hitbox (struct player *p) {
 	float x_Rinferior = p->x + p->x_size; 
 	float y_Rinferior = p->y + p->y_size;
 
-	if (p->joystick->down) {
-		float x_Lsuperior = p->x; 
-		float y_Lsuperior = p->y + 60; 
-    	float x_Rinferior = p->x + p->x_size; 
-    	float y_Rinferior = p->y + p->y_size;
+	if (down == 5) {
+		y_Lsuperior += 60; 
 	}
 
     al_draw_rectangle (x_Lsuperior, y_Lsuperior, x_Rinferior, y_Rinferior, al_map_rgb(255, 255, 0), 2.0); // Desenha a hitbox do player);
 }
 
+void rolling (struct player *p, float *x) {
+	if (!p) return;
+
+	if (p->x == RIGHT_LIMIT && *x > -1920)
+		*x -= p->vel;
+	else if (p->x == LEFT_LIMIT && *x < 0)
+		*x += p->vel;
+	
+}
 
 
 int Jogo (ALLEGRO_DISPLAY* disp) {
 	ALLEGRO_TIMER *timer = al_create_timer (1.0 / 60.0);
 	ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue ();
-	ALLEGRO_BITMAP *cenario = al_load_bitmap ("/home/dsbd/prog2/A3/sprites/fase1.png");
+	ALLEGRO_BITMAP *cenario = al_load_bitmap ("/Users/sebas/Documents/Prog2/A3/sprites/Fase1Rolling.png");
 
 	enum Direction {right , left};
 	enum Sprite {stand, run1, run2, rungun, jump, downgun, jumpgun};
+	float x_background = 0;
 
 	if (timer == NULL || queue == NULL || cenario == NULL) {
 		fprintf(stderr, "Erro ao carregar a fonte ou bitmap\n");
@@ -192,7 +138,7 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 		return -1;
 	}
 
-	struct player *p = player_create (); // Cria o player, que vai ser usado no jogo
+	struct player *p = player_create (105, 220, 10); // Cria o player, que vai ser usado no jogo
 	if (!p) return 0;
 	
 	al_register_event_source (queue ,al_get_display_event_source (disp)); // eventos da tela (fechar a janela)
@@ -203,6 +149,7 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 	// Inicia o timer pra tudo começar de vez
 	al_start_timer (timer);
 	ALLEGRO_EVENT event;		// Estrutura onde os eventos vão ser armazenados à medida que são capturados da queue.
+
 
 	int sair = 0, dir = 0, jump_f = 0;						// sair: flag pra sair do jogo; dir: direção da sprite; jump_f: flag de pulo
 	float linha = 0, coluna = 0, j_vel = Y_VELOCITY;
@@ -218,28 +165,19 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 
 		switch (event.type) {
 			case ALLEGRO_EVENT_TIMER:
-				al_clear_to_color (al_map_rgb (0, 0, 0)); // Limpa a tela pra receber o próximo frame
+				al_clear_to_color (al_map_rgb (255, 255, 255)); // Limpa a tela pra receber o próximo frame
 
-				al_draw_bitmap (cenario, 0, 0, 0);
-				can_move (p, FLOOR_LIMIT);	// Verifica se o player PODE se mover e move ele, ou não
-				draw_hitbox (p);	// Desenha a hitbox do player
+				rolling (p, &x_background);
+				al_draw_bitmap (cenario, x_background, 0, 0);
 
+
+				can_move (p);	// Verifica se o player PODE se mover e move ele, ou não
 
 				// Se tiver sprite, desenha
 				if (p->sprite) {
 					num_sprite = wich_sprite (p);
+					draw_hitbox (p, num_sprite);	// Desenha a hitbox do player
 
-
-					// Pra sprite de corrida ficar alternando
-					// if (cooldown && num_sprite == 2) {
-					// 	cooldown--;
-					// 	num_sprite = 1;		// Reseta o número do sprite
-					// } else if (cooldown && num_sprite == 1) {
-					// 	cooldown--;
-					// 	num_sprite = 2;		// Reseta o número do sprite
-					// }
-					// if (!cooldown)
-					// 	cooldown = 19;		// Reseta o cooldown
 					
 					// Lógica do pulo com gravidade!
 					if (p->joystick->up ) jump_f = 1;
@@ -255,8 +193,7 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 						jump_f = 0;			// Flag de pulo desativa
 					}
 					
-					draw_hitbox (p);	// Desenha a hitbox do player
-					
+					// Define qual sprite do player vou pegar
 					coluna =  ((num_sprite * al_get_bitmap_width(p->sprite) / 7));		// Calcula qual sprite pegar
 					linha = (direction (p) * (al_get_bitmap_height(p->sprite) / 2));	// De qual linha (virado pra direita ou esquerda)
 
@@ -269,7 +206,12 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 						220, 262.5, 
 						0
 					);
-				
+
+					if (p->gun->shots) {
+						for (struct bullet *i = p->gun->shots; i != NULL; i = i->next)
+							al_draw_bitmap (i->sprite, i->x, i->y, 0);
+						if (p->gun->timer) p->gun->timer--;
+					}
 				}
 				al_flip_display ();
 				break;
@@ -282,6 +224,8 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 				
 				// Vai mudar o estado do joystick, mas não necessariamente vai ser aprovado
 				move_player (p->joystick, event);
+
+
 				break;
 				
 			case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:

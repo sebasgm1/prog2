@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include "Pistol.h"
 
+
+
+
 struct pistol* pistol_create(){																				//Implementação da função "pistol_create"
 
 	struct pistol *new_pistol = malloc(sizeof(struct pistol));												//Aloca a memória na heap para uma instância de pistola
@@ -8,10 +11,12 @@ struct pistol* pistol_create(){																				//Implementação da função
 	
     new_pistol->timer = 0;																			//Inicializa o relógio de disparos em zero (pronto para atirar)
 	new_pistol->shots = NULL;																			//Inicializa a lista de disparos com NULL; ou seja, sem disparos
+	
+	new_pistol->bullet_sprite = al_load_bitmap ("/Users/sebas/Documents/Prog2/A3/sprites/Bullet.png");
 	return new_pistol;																					//Retorna a nova instância de pistola
 }
 
-struct bullet* pistol_shot(unsigned short x, unsigned short y, unsigned char trajectory, struct pistol *gun, ALLEGRO_BITMAP *bullet_sprite){			//Implementação da função "pistol_shot"
+struct bullet* pistol_shot(long x, long y, unsigned char trajectory, struct pistol *gun, ALLEGRO_BITMAP *bullet_sprite){			//Implementação da função "pistol_shot"
 	
 	struct bullet *new_bullet = (struct bullet*) bullet_create(x, y, trajectory, gun->shots, bullet_sprite);									//Cria uma nova instância de projétil a ser disparado
 	if (!new_bullet) return NULL;																		//Verifica o sucesso da alocação de memória; retorna NULL em caso de falha

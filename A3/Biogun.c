@@ -36,7 +36,8 @@ int main(){
 		if (select == 2) { // Tela do jogo
 			select = Jogo (disp);
 		}
-		if (select == 3) { // LOAD...
+		if (select == 3) {  // Tela da fase final (BOSS)
+			//select = Final (disp);//
 
 		}	
 	}

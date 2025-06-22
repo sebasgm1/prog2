@@ -25,21 +25,77 @@ struct bullet *bullet_create (long x, long y, unsigned char trajectory, struct b
     return b;
 }
 
-void bullet_move (struct bullet *b) {
+// Bullet Move já vai dando free em quem saiu do display
+// void bullet_move (struct bullet *b) {
 
-    if (!b) {
-        perror ("Erro ao mover a Bullet\n");
-        return;
-    }
+//     if (!b) {
+//         perror ("Erro ao mover a Bullet\n");
+//         return;
+//     }
 
-    for (struct bullet *i = b; i != NULL; i = (struct bullet*) i->next) {
-        switch (i->trajectory) {
-            case 1: i->x += BULLET_SPEED; break;  // indo pra direita
-            case 0: i->x -= BULLET_SPEED; break;  // indo pra esquerda
-        }  
-    }
+//     struct bullet *ant = b;
 
-}
+//     // faz a verificação caso tenha apenas uma bala na lista
+//     // if (!b->next) {
+//     //     switch (b->trajectory) {
+//     //         case 1: // indo pra direita
+//     //             if (b->x < 540)
+//     //                 bullet_destroy (b);
+//     //             else
+//     //                 b->x += BULLET_SPEED;
+//     //             break;
+//     //         case 0:
+//     //             if (b->x > 0)
+//     //                 bullet_destroy (b);
+//     //             else
+//     //                 b->x -= BULLET_SPEED;
+//     //             break;
+//     //     }
+//     // }
+//     // else {
+    
+//         // Se tiver mais de uma bala, cai nesse for
+//         for (struct bullet *i = b; i != NULL; i = (struct bullet*) i->next) {
+
+//             switch (i->trajectory) {
+//                 case 1:   // indo pra direita
+//                     if (i->x < 540) {
+//                         ant->next = i->next;
+//                         if (i != b)
+//                             bullet_destroy (i);
+//                         else {  // atualizo a cabeça da lista
+//                             ant = b;
+//                             b = b->next;
+//                             bullet_destroy (ant);
+//                         }
+//                     } 
+//                     else
+//                         i->x += BULLET_SPEED; 
+//                     break;
+
+//                 case 0:   // indo pra esquerda
+//                     if (i->x > 0) {
+//                         ant->next = i->next;
+//                         if (i != b)
+//                             bullet_destroy (i);
+//                         else {  // atualizo a cabeça da lista
+//                             ant = b;
+//                             b = b->next;
+//                             bullet_destroy (ant);
+//                         }
+//                     }
+//                     else
+//                         i->x -= BULLET_SPEED; 
+//                     break;
+//             }
+//             ant = i;
+//         }
+//     // }    
+
+
+// }
+
+
 
 void bullet_destroy (struct bullet *b) {
 
