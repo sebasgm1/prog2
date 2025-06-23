@@ -23,13 +23,21 @@ struct bullet* pistol_shot(long x, long y, unsigned char trajectory, struct pist
 	return new_bullet;																					//Retorna uma nova instância de projétil
 }
 
-void pistol_destroy(struct pistol *element){																	//Implementação da função "pistol_destroy"
+void pistol_destroy(struct pistol *element) {
+    if (!element) return;
 
-	struct bullet *sentinel;																					//Sentinela para a remoção de projéteis ativos
-	for (struct bullet *index = element->shots; index != NULL; index = sentinel){								//Para cada projétil na lista de disparos
-		sentinel = (struct bullet*) index->next;																//Armazena o próximo projétil
-		bullet_destroy(index);																			//Chama o destrutor do projétil atual
-	}
-	free(element);																						//Libera a memória da instância de pistola
-    element = NULL;
+    // Destrói todas as balas
+    struct bullet *curr = element->shots;
+    while (curr) {
+        struct bullet *next = curr->next;
+        bullet_destroy(curr);
+        curr = next;
+    }
+
+    // Destrói a sprite da bala se for exclusiva desta pistola
+    if (element->bullet_sprite) {
+        al_destroy_bitmap(element->bullet_sprite);
+    }
+
+    free(element);
 }

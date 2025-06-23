@@ -14,6 +14,10 @@ int Inicio (ALLEGRO_DISPLAY* disp);
 
 int Jogo (ALLEGRO_DISPLAY* disp);
 
+int GameOver (ALLEGRO_DISPLAY* disp);
+
+int Final (ALLEGRO_DISPLAY* disp);
+
 // void Fim (ALLEGRO_DISPLAY* disp);
 
 

@@ -9,9 +9,14 @@ struct bullet *bullet_create (long x, long y, unsigned char trajectory, struct b
 
     struct bullet *b = malloc (sizeof (struct bullet));
     if (!b) return NULL;
+    
+    if (!trajectory) { // 0: direita
+        b->x = x + 180;
+    } else {
+        b->x = x - 50;
+    }
+    b->y = y + 80;
 
-    b->x = x;
-    b->y = y;
     b->trajectory = trajectory;
     b->next = next;
     
@@ -25,76 +30,46 @@ struct bullet *bullet_create (long x, long y, unsigned char trajectory, struct b
     return b;
 }
 
+
 // Bullet Move já vai dando free em quem saiu do display
-// void bullet_move (struct bullet *b) {
+void bullet_move(struct bullet **head, ALLEGRO_BITMAP* bullet) {
+    if (!head || !bullet) return;
 
-//     if (!b) {
-//         perror ("Erro ao mover a Bullet\n");
-//         return;
-//     }
+    struct bullet *curr = *head;
+    struct bullet *prev = NULL;
 
-//     struct bullet *ant = b;
+    while (curr) {
+        if (curr->x >= 960 || curr->x <= -60) { // Saiu dos limites
+            struct bullet *to_remove = curr;
+            curr = curr->next;
+            
+            if (prev) {
+                prev->next = curr;
+            } else {
+                *head = curr;
+            }
+            
+            bullet_destroy(to_remove);
+            continue;
+        }
 
-//     // faz a verificação caso tenha apenas uma bala na lista
-//     // if (!b->next) {
-//     //     switch (b->trajectory) {
-//     //         case 1: // indo pra direita
-//     //             if (b->x < 540)
-//     //                 bullet_destroy (b);
-//     //             else
-//     //                 b->x += BULLET_SPEED;
-//     //             break;
-//     //         case 0:
-//     //             if (b->x > 0)
-//     //                 bullet_destroy (b);
-//     //             else
-//     //                 b->x -= BULLET_SPEED;
-//     //             break;
-//     //     }
-//     // }
-//     // else {
-    
-//         // Se tiver mais de uma bala, cai nesse for
-//         for (struct bullet *i = b; i != NULL; i = (struct bullet*) i->next) {
+        // Movimento normal
+        curr->x += (curr->trajectory == 0) ? BULLET_SPEED : -BULLET_SPEED;
+        
+        // Desenho
+        al_draw_scaled_bitmap(
+            bullet,
+            0, 0,
+            al_get_bitmap_width(bullet), al_get_bitmap_height(bullet),
+            curr->x, curr->y,
+            al_get_bitmap_width(bullet) * 0.5, al_get_bitmap_height(bullet) * 0.5,
+            curr->trajectory ? ALLEGRO_FLIP_HORIZONTAL : 0
+        );
 
-//             switch (i->trajectory) {
-//                 case 1:   // indo pra direita
-//                     if (i->x < 540) {
-//                         ant->next = i->next;
-//                         if (i != b)
-//                             bullet_destroy (i);
-//                         else {  // atualizo a cabeça da lista
-//                             ant = b;
-//                             b = b->next;
-//                             bullet_destroy (ant);
-//                         }
-//                     } 
-//                     else
-//                         i->x += BULLET_SPEED; 
-//                     break;
-
-//                 case 0:   // indo pra esquerda
-//                     if (i->x > 0) {
-//                         ant->next = i->next;
-//                         if (i != b)
-//                             bullet_destroy (i);
-//                         else {  // atualizo a cabeça da lista
-//                             ant = b;
-//                             b = b->next;
-//                             bullet_destroy (ant);
-//                         }
-//                     }
-//                     else
-//                         i->x -= BULLET_SPEED; 
-//                     break;
-//             }
-//             ant = i;
-//         }
-//     // }    
-
-
-// }
-
+        prev = curr;
+        curr = curr->next;
+    }
+}
 
 
 void bullet_destroy (struct bullet *b) {

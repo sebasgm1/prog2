@@ -7,6 +7,49 @@
 #include "Player.h"
 
 
+void move_enemy(struct player *enemy, struct player *p, int *state, float *timer) {
+  if (!enemy || !enemy->active || !enemy->gun || !p || !p->active) return;
+
+  int speed = ENEMY_VELOCITY; // Velocidade do inimigo
+
+
+  // Atualiza o timer
+  *timer -= 1.0 / 60.0; // Supondo que o jogo roda a 60 FPS
+
+  // Alterna entre os estados a cada 1 segundo
+  if (*timer <= 0) {
+      check_collision (enemy, p);
+
+      *state = (*state == 0) ? 1 : 0; // Alterna entre andar (0) e atirar (1)
+      *timer = 1.0; // Reseta o timer para 1 segundo
+  }
+
+  // Comportamento baseado no estado
+  if (*state == 0) { // Estado: andar
+    if (enemy->x > p->x) { // Inimigo está à direita e deve ir para a esquerda
+      enemy->x -= speed;
+      enemy->joystick->right = 0;
+      enemy->joystick->left = 1;
+    } else {
+      enemy->x += speed; // Move o inimigo na direção do jogador
+      enemy->joystick->right = 1;
+      enemy->joystick->left = 0;
+    }      
+    enemy->joystick->fire = 0; // Não atira enquanto anda
+  } 
+  else if (*state == 1) { // Estado: atirar
+    enemy->joystick->fire = 1; // Atira
+    if (enemy->joystick->fire && !enemy->gun->timer) {
+        enemy->gun->shots = player_shot(enemy); // Cria uma bala
+        enemy->gun->timer = GUN_COOLDOWN + 10; // Define o cooldown da arma
+    }
+  }
+
+  // Atualiza o cooldown da arma
+  if (enemy->gun->timer) {
+      enemy->gun->timer--;
+  }
+}
 
 void move_player (struct joystick *element, ALLEGRO_EVENT event) {
   if (!element) {
@@ -60,46 +103,24 @@ void move_player (struct joystick *element, ALLEGRO_EVENT event) {
 
 }
 
-void update_bullets(struct player *player){																																										//Implementação da função que atualiza o posicionamento de projéteis conforme o movimento dos mesmos
-	
-	struct bullet *previous = NULL;																																												//Variável auxiliar para salvar a posição imediatamente anterior na fila
-	for (struct bullet *index = player->gun->shots; index != NULL;){																																				//Para cada projétil presente na lista de projéteis disparados
-		if (!index->trajectory) index->x -= BULLET_SPEED;																																					//Se a trajetória for para a esquerda, atualiza a posição para a esquerda
-		else if (index->trajectory == 1) index->x += BULLET_SPEED;																																			//Se a trajetória for para a direita, atualiza a posição para a esquerda
-		
-		if ((index->x < 0) || (index->x > 960)){																																						//Verifica se o projétil saiu das bordas da janela
-			if (previous){																																													//Verifica se não é o primeiro elemento da lista de projéteis
-				previous->next = index->next;																																								//Se não for, salva o próximo projétil
-				bullet_destroy(index);																																										//Chama o destrutor para o projétil atual
-				index = previous->next;																																							//Atualiza para o próximo projétil
-			}
-			else {																																															//Se for o primeiro projétil da lista
-				player->gun->shots = index->next;																																					//Atualiza o projétil no início da lista
-				bullet_destroy(index);																																										//Chama o destrutor para o projétil atual
-				index = player->gun->shots;																																									//Atualiza para o próximo projétil
-			}
-		}
-		else{																																																//Se não saiu da tela
-			previous = index;																																												//Atualiza o projétil anterior (para a próxima iteração)
-			index = index->next;																																									//Atualiza para o próximo projétil
-		}
-	}
-}
 
 
 void can_move (struct player *p) {
+  if (!p || !p->active) return;
 
   float vel = p->vel;
 
   if (p->joystick->run)
-    vel = vel * 1.7;
+    vel = vel * 2;
 
 
   if (p->joystick->right && p->x < RIGHT_LIMIT) {
     p->x += vel;
+    p->last_direction = 0;
   }
   if (p->joystick->left && p->x > LEFT_LIMIT) {
     p->x -= vel;
+    p->last_direction = 1;
   }
 
   // Não deixa passar do chão
@@ -107,48 +128,64 @@ void can_move (struct player *p) {
     p->y += vel;
   }
 
-  if (p->joystick->fire) {
+  if (p->joystick->fire && !p->gun->timer) {
     if (!p->gun->timer) {
-      player_shot (p);
-      p->gun->timer = GUN_COOLDOW;
+      p->gun->shots = player_shot (p);
+      p->gun->timer = GUN_COOLDOWN;
     }
   }
 
-  update_bullets (p);
+  if (p->gun->timer)
+    p->gun->timer--;
 
 }
 
-// tenta ver a colisão entre a bala e o alvo
+// Confere ver a colisão entre a bala e o alvo 
 void check_collision (struct player *shooter, struct player *target) {
-  if (!shooter || !target) return;
+  if (!shooter || !shooter->active || !shooter->gun || !target) return;
+
+  struct bullet *prev = NULL;
+  struct bullet *shot = shooter->gun->shots;
 
 
-  for (struct bullet *shot = shooter->gun->shots; shot != NULL; shot->next)
-    if (shot->trajectory) {   // Tiro indo pra direita
-      if ((shot->x >= target->x) && (target->x + target->x_size <= ))
+  while (shot != NULL) {
+    // Testa se o shot está dentro da hitbox do target (se acertou o tiro ou não)
+    if (((shot->x >= target->x) && (shot->x <= target->x + target->x_size)) &&    // Se a bala está entre o espaço em X
+        ((shot->y >= target->y) && (shot->y <= target->y + target->y_size)))      // E TAMBÉM está entre o espaço em Y
+    {
+      printf ("ACERTOU O TIRO !!!!!!!!\n");
+        target->life -= SHOT_DAMAGE; // Reduz a vida do alvo
+
+        // Remove a bala da lista
+        if (prev) { // Se não for a primeira bala da lista
+            prev->next = shot->next;
+        } else { // Se for a primeira bala da lista
+            shooter->gun->shots = shot->next;
+        }
+
+        struct bullet *to_destroy = shot;
+        shot = shot->next; // Avança para o próximo elemento
+        bullet_destroy(to_destroy); // Destrói a bala atual
+        continue; // Continua verificando as próximas balas
     }
-    else { // Tiro indo pra esquerda
 
-    }
-
+    // Avança para o próximo elemento
+    prev = shot;
+    shot = shot->next;
+  }
 }
 
-int check_kill (struct player *p, struct player *enemy) {
-  if (!p || !enemy) return -1;
+int check_kill(struct player *p, struct player *enemy) {
+  if (!p || !enemy || !enemy->active) return -1;
 
-  if (p->life == 0)   // Player morreu! return 1
-    return 1;
-  else if (enemy->life == 0)    // enemy morreu! return 2
-    return 2;
-
-  if (p->life == 0 && enemy->life == 0)   // EMPATE! matou e morreu
-    return 0;
+  if (p->life <= 0) return 1;
+  if (enemy->life <= 0) return 2;
   
-  return 3; // Tudo ok, ninguém morreu ainda
+  return 0;
 }
 
 
-struct player *player_create (float x, float y, long life) {
+struct player *player_create (float x, float y, long life, ALLEGRO_BITMAP *sprite) {
   struct player* p = malloc (sizeof (struct player));
   if (!p) {
     perror ("Erro no malloc do create_player\n");
@@ -166,6 +203,8 @@ struct player *player_create (float x, float y, long life) {
   // Status de vida e velocidade do player
   p->life = life;
   p->vel = 5.0;
+  p->last_direction = 0; // 0: Direita, 1: Esquerda
+  p->active = 1;  // 0: foi destruído
 
   p->joystick = create_joystick ();
   if (!p->joystick) {
@@ -180,52 +219,69 @@ struct player *player_create (float x, float y, long life) {
   }
 
   // Crio a sprite do meu jogador
-  p->sprite = al_load_bitmap ("/Users/sebas/Documents/Prog2/A3/sprites/player440x525.png");
+  p->sprite = sprite;
 
   return p;
 }
 
 
-struct player *player_shot (struct player *p) {
+struct bullet *player_shot (struct player *p) {
 
-  if (!p || p->gun) {
+  if (!p || !p->active || !p->gun || !p->joystick || !p->gun->bullet_sprite) {
     perror ("Erro na função player_shot\n");
     return NULL;
   }
 
   // Nova bala, será a nova cabeça da lista
   struct bullet *shot_head;
-  int dir = direction (p);  // 0: direita; 1: esquerda
+  int dir = 0;
+
+
+  if (p->joystick->left || p->joystick->right)
+    direction (p, &dir);
+  else dir = p->last_direction;
 
   shot_head = pistol_shot (p->x, p->y, dir, p->gun, p->gun->bullet_sprite);
+  if (!shot_head) {
+    perror ("Erro ao criar a shot_head\n");
+    return NULL;
+  }
 
   // Se criou a nova cabeça, coloca ela na arma
-  if (shot_head) {
-    p->gun->shots = shot_head;
-  }
-
-  return NULL;
+  return shot_head;
 
 }
 
 
-void destroy_player (struct player *p) {
+void destroy_player(struct player **p) {
+  if (!p || !*p) return;
 
-  if (!p) {
-    destroy_joystick (p->joystick);
-    pistol_destroy (p->gun);
+  // Marca como inativo
+  (*p)->active = 0;
 
-    al_destroy_bitmap (p->sprite);
-    al_destroy_bitmap (p->gun->bullet_sprite);
-
-    free (p);
-    p = NULL;
+  // Destrói a pistola (incluindo balas)
+  if ((*p)->gun) {
+      pistol_destroy((*p)->gun);
+      (*p)->gun = NULL;
   }
+
+  // Destrói o joystick
+  if ((*p)->joystick) {
+      destroy_joystick((*p)->joystick);
+      (*p)->joystick = NULL;
+  }
+
+  // NÃO destrua a sprite principal aqui!
+  // Ela será destruída no final do jogo
+
+  free(*p);
+  *p = NULL;
 }
+
 
 int wich_sprite (struct player *p) {
 
-	if (!p || !p->sprite) {
+	if (!p || !p->active || !p->sprite || !p->joystick) {
 		fprintf(stderr, "Erro: ponteiro nulo no witch_sprite\n");
 		return -1;
 	}
@@ -259,16 +315,15 @@ int wich_sprite (struct player *p) {
 
 } 
 
-int direction (struct player *p) {
-	if (!p || !p->joystick) {
+void direction (struct player *p, int *dir) {
+	if (!p || !p->active || !p->joystick) {
 		fprintf(stderr, "Erro: ponteiro nulo no direction\n");
-		return -1;
+		return;
 	}
 
-	if (p->joystick->right) {
-		return 0; // Direita
-	} else if (p->joystick->left) {
-		return 1; // Esquerda
-	}
-	return 0; // Parado
+  if (p->joystick->right && p->joystick->left)
+    return;
+
+  *dir = p->joystick->left;   // 0: right, 1: left
+
 }
