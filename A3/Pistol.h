@@ -12,7 +12,7 @@ struct pistol {
     struct bullet *shots;  // Cabeça da lista
 };
 
-struct pistol *pistol_create ();
+struct pistol* pistol_create(ALLEGRO_BITMAP *bullet);
 
 struct bullet* pistol_shot(long x, long y, unsigned char trajectory, struct pistol *gun, ALLEGRO_BITMAP *bullet_sprite);
 

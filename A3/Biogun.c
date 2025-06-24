@@ -37,8 +37,7 @@ int main(){
 			select = Jogo (disp);
 		}
 		if (select == 3) {  // Tela da fase final (BOSS)
-			// select = Final (disp);
-
+			select = Final (disp);
 		}	
 		if (select == 4) { // Tela de game over (MORREU)
 			select = GameOver (disp);

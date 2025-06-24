@@ -18,7 +18,7 @@ int GameOver (ALLEGRO_DISPLAY* disp);
 
 int Final (ALLEGRO_DISPLAY* disp);
 
-// void Fim (ALLEGRO_DISPLAY* disp);
+void Fim (ALLEGRO_DISPLAY* disp);
 
 
 #endif

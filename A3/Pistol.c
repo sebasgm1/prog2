@@ -4,7 +4,7 @@
 
 
 
-struct pistol* pistol_create(){																				//Implementação da função "pistol_create"
+struct pistol* pistol_create(ALLEGRO_BITMAP *bullet){																				//Implementação da função "pistol_create"
 
 	struct pistol *new_pistol = malloc(sizeof(struct pistol));												//Aloca a memória na heap para uma instância de pistola
 	if (!new_pistol) return NULL;
@@ -12,7 +12,7 @@ struct pistol* pistol_create(){																				//Implementação da função
     new_pistol->timer = 0;																			//Inicializa o relógio de disparos em zero (pronto para atirar)
 	new_pistol->shots = NULL;																			//Inicializa a lista de disparos com NULL; ou seja, sem disparos
 	
-	new_pistol->bullet_sprite = al_load_bitmap ("/Users/sebas/Documents/Prog2/A3/sprites/Bullet.png");
+	new_pistol->bullet_sprite = bullet;
 	return new_pistol;																					//Retorna a nova instância de pistola
 }
 

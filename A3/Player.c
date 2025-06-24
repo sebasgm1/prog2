@@ -18,10 +18,10 @@ void move_enemy(struct player *enemy, struct player *p, int *state, float *timer
 
   // Alterna entre os estados a cada 1 segundo
   if (*timer <= 0) {
-      check_collision (enemy, p);
+    check_collision (enemy, p);
 
-      *state = (*state == 0) ? 1 : 0; // Alterna entre andar (0) e atirar (1)
-      *timer = 1.0; // Reseta o timer para 1 segundo
+    *state = (*state == 0) ? 1 : 0; // Alterna entre andar (0) e atirar (1)
+    *timer = 1.0; // Reseta o timer para 1 segundo
   }
 
   // Comportamento baseado no estado
@@ -41,7 +41,7 @@ void move_enemy(struct player *enemy, struct player *p, int *state, float *timer
     enemy->joystick->fire = 1; // Atira
     if (enemy->joystick->fire && !enemy->gun->timer) {
         enemy->gun->shots = player_shot(enemy); // Cria uma bala
-        enemy->gun->timer = GUN_COOLDOWN + 10; // Define o cooldown da arma
+        enemy->gun->timer = GUN_COOLDOWN + 10;  // Define o cooldown da arma
     }
   }
 
@@ -185,7 +185,7 @@ int check_kill(struct player *p, struct player *enemy) {
 }
 
 
-struct player *player_create (float x, float y, long life, ALLEGRO_BITMAP *sprite) {
+struct player *player_create (float x, float y, long life, ALLEGRO_BITMAP *sprite, ALLEGRO_BITMAP *bullet) {
   struct player* p = malloc (sizeof (struct player));
   if (!p) {
     perror ("Erro no malloc do create_player\n");
@@ -204,15 +204,16 @@ struct player *player_create (float x, float y, long life, ALLEGRO_BITMAP *sprit
   p->life = life;
   p->vel = 5.0;
   p->last_direction = 0; // 0: Direita, 1: Esquerda
+
   p->active = 1;  // 0: foi destruído
 
-  p->joystick = create_joystick ();
+  p->joystick = create_joystick (bullet);
   if (!p->joystick) {
     perror ("Erro ao criar o Joystick\n");
     return NULL;
   }
 
-  p->gun = pistol_create ();
+  p->gun = pistol_create (bullet);
   if (!p->gun) {
     perror ("Erro ao criar a Gun\n");
     return NULL;
@@ -227,10 +228,32 @@ struct player *player_create (float x, float y, long life, ALLEGRO_BITMAP *sprit
 
 struct bullet *player_shot (struct player *p) {
 
-  if (!p || !p->active || !p->gun || !p->joystick || !p->gun->bullet_sprite) {
-    perror ("Erro na função player_shot\n");
-    return NULL;
+  if (!p) {
+          fprintf(stderr, "Erro: ponteiro do jogador é NULL\n");
+          return NULL;
+      }
+      if (!p->active) {
+          fprintf(stderr, "Erro: jogador está inativo\n");
+          return NULL;
+      }
+      if (!p->gun) {
+          fprintf(stderr, "Erro: arma do jogador é NULL\n");
+          return NULL;
+      }
+      if (!p->joystick) {
+          fprintf(stderr, "Erro: joystick do jogador é NULL\n");
+          return NULL;
+      }
+      if (!p->gun->bullet_sprite) {
+          fprintf(stderr, "Erro: sprite da bala não carregada\n");
   }
+
+  // if (!p || !p->active || !p->gun || !p->joystick || !p->gun->bullet_sprite) {
+  //   perror ("Erro na função player_shot\n");
+  //   return NULL;
+  // }
+
+
 
   // Nova bala, será a nova cabeça da lista
   struct bullet *shot_head;
@@ -253,31 +276,28 @@ struct bullet *player_shot (struct player *p) {
 }
 
 
-void destroy_player(struct player **p) {
-  if (!p || !*p) return;
+void destroy_player(struct player *p) {
+  if (!p) return;
 
   // Marca como inativo
-  (*p)->active = 0;
+  p->active = 0;
 
   // Destrói a pistola (incluindo balas)
-  if ((*p)->gun) {
-      pistol_destroy((*p)->gun);
-      (*p)->gun = NULL;
+  if (p->gun) {
+      pistol_destroy(p->gun);
+      p->gun = NULL;
   }
 
   // Destrói o joystick
-  if ((*p)->joystick) {
-      destroy_joystick((*p)->joystick);
-      (*p)->joystick = NULL;
+  if (p->joystick) {
+      destroy_joystick(p->joystick);
+      p->joystick = NULL;
   }
 
-  // NÃO destrua a sprite principal aqui!
-  // Ela será destruída no final do jogo
 
-  free(*p);
-  *p = NULL;
+  free(p);
+  p = NULL;
 }
-
 
 int wich_sprite (struct player *p) {
 
@@ -314,6 +334,21 @@ int wich_sprite (struct player *p) {
 	return num_sprite;
 
 } 
+
+int witch_virus (struct player *p) {
+  int num_sprite = 2;
+
+  if (p->joystick->right && p->joystick->left) {
+    num_sprite = 2; // Stand
+  } else if (p->joystick->right) {
+    num_sprite = 1; // Direita
+  } else if (p->joystick->left) {
+    num_sprite = 0; // Esquerda
+  }
+
+  return num_sprite;
+}
+
 
 void direction (struct player *p, int *dir) {
 	if (!p || !p->active || !p->joystick) {

@@ -39,7 +39,7 @@ void check_collision (struct player *shooter, struct player *target);
 int check_kill (struct player *p, struct player *enemy);
 
 // Cria o jogador e retorna o ponteiro
-struct player *player_create (float x, float y, long life, ALLEGRO_BITMAP *sprite);
+struct player *player_create (float x, float y, long life, ALLEGRO_BITMAP *sprite, ALLEGRO_BITMAP *bullet);
 
 // Move o jogador de acordo com o evento
 void move_player (struct joystick *element, ALLEGRO_EVENT event);
@@ -49,9 +49,11 @@ void move_player (struct joystick *element, ALLEGRO_EVENT event);
 // Cria uma nova bala dentro da lista de balas
 struct bullet *player_shot (struct player *p);
 
-void destroy_player (struct player **p);
+void destroy_player (struct player *p);
 
 int wich_sprite (struct player *p);
+
+int witch_virus (struct player *p);
 
 void direction (struct player *p, int *dir);
 

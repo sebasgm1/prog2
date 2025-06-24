@@ -11,8 +11,8 @@ typedef struct {
 
 int Inicio (ALLEGRO_DISPLAY* disp) {
 
-	ALLEGRO_FONT *font = al_load_ttf_font("/Users/sebas/Documents/Prog2/A3/fontes/Pixelmax/Pixelmax-Regular.otf", 40, 0);									//Carrega uma fonte padrão para escrever na tela (é bitmap, mas também suporta adicionar fontes ttf
-	ALLEGRO_BITMAP *inicio = al_load_bitmap("/Users/sebas/Documents/Prog2/A3/sprites/Inicio.png");
+	ALLEGRO_FONT *font = al_load_ttf_font("/home/dsbd/prog2/A3/fontes/Pixelmax/Pixelmax-Regular.otf", 40, 0);									//Carrega uma fonte padrão para escrever na tela (é bitmap, mas também suporta adicionar fontes ttf
+	ALLEGRO_BITMAP *inicio = al_load_bitmap("/home/dsbd/prog2/A3/sprites/Inicio.png");
 	ALLEGRO_TIMER *timer = al_create_timer (1.0 / 60.0);
 	ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue ();
 
@@ -94,34 +94,6 @@ int Inicio (ALLEGRO_DISPLAY* disp) {
 }
 
 
-void draw_hitbox (struct player *p, int down, int cor) {
-
-    if (!p) {
-        perror ("Erro ao desenhar a hitbox do player\n");
-        return;
-    }
-	if (p->life <= 0)
-		return;
-	
-	float x_Lsuperior = p->x; 
-	float y_Lsuperior = p->y; 
-	float x_Rinferior = p->x + p->x_size; 
-	float y_Rinferior = p->y + p->y_size;
-
-	if (down == 5) {
-		y_Lsuperior += 60; 
-	}
-
-	if (cor == 0) // Blue
-    	al_draw_rectangle (x_Lsuperior, y_Lsuperior, x_Rinferior, y_Rinferior, al_map_rgb(0, 0, 255), 2.0); // Desenha a hitbox do player);
-
-	if (cor == 1) // Red
-		al_draw_rectangle (x_Lsuperior, y_Lsuperior, x_Rinferior, y_Rinferior, al_map_rgb(255, 0, 0), 2.0); // Desenha a hitbox do player);
-	else
-		al_draw_rectangle (x_Lsuperior, y_Lsuperior, x_Rinferior, y_Rinferior, al_map_rgb(0, 0, 0), 2.0); // Desenha a hitbox do player);
-
-
-}
 
 
 void rolling (struct player *p, float *x) {
@@ -147,32 +119,37 @@ int check_player_death(struct player *p, struct player **enemies, int enemy_coun
         int result = check_kill(p, enemies[i]);
         
         if (result == 1) {  // Player morreu
-            destroy_player(&p);
+            destroy_player(p);
             return 1;
         }
         else if (result == 2) {  // Inimigo morreu
-            destroy_player(&enemies[i]);
             // Atualiza triggers
-            for (int j = 0; j < num_triggers; j++) {
-                if (triggers[j].enemy == enemies[i]) {
-                    triggers[j].enemy = NULL;
-                }
-            }
-        }
+					for (int j = 0; j < num_triggers; j++) {
+						if (triggers[j].enemy == enemies[i]) {
+								triggers[j].enemy = NULL;
+								triggers[j].activated = 0;
+						}
+					}
+					destroy_player(enemies[i]);
+      	}
     }
     return 0;
 }
 
 
 int Jogo (ALLEGRO_DISPLAY* disp) {
-	ALLEGRO_FONT *font = al_load_ttf_font("/Users/sebas/Documents/Prog2/A3/fontes/Pixelmax/Pixelmax-Regular.otf", 40, 0);									//Carrega uma fonte padrão para escrever na tela (é bitmap, mas também suporta adicionar fontes ttf
+	ALLEGRO_FONT *font = al_load_ttf_font("/home/dsbd/prog2/A3/fontes/Pixelmax/Pixelmax-Regular.otf", 40, 0);									//Carrega uma fonte padrão para escrever na tela (é bitmap, mas também suporta adicionar fontes ttf
 	ALLEGRO_TIMER *timer = al_create_timer (1.0 / 60.0);
 	ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue ();
-	ALLEGRO_BITMAP *cenario = al_load_bitmap ("/Users/sebas/Documents/Prog2/A3/sprites/Fase1Rolling.png");
+	ALLEGRO_BITMAP *cenario = al_load_bitmap ("/home/dsbd/prog2/A3/sprites/Fase1Rolling.png");
 	
 	// Sprite do jogador e inimigos
-	ALLEGRO_BITMAP *player_sprite = al_load_bitmap ("/Users/sebas/Documents/Prog2/A3/sprites/player440x525.png");
-	ALLEGRO_BITMAP *enemy1_sprite = al_load_bitmap ("/Users/sebas/Documents/Prog2/A3/sprites/player440x525.png");
+	ALLEGRO_BITMAP *player_sprite = al_load_bitmap ("/home/dsbd/prog2/A3/sprites/player440x525.png");
+	ALLEGRO_BITMAP *enemy_sprite = al_load_bitmap ("/home/dsbd/prog2/A3/sprites/virus.png");
+
+	ALLEGRO_BITMAP *player_bullet = al_load_bitmap ("/home/dsbd/prog2/A3/sprites/Bullet.png");
+	ALLEGRO_BITMAP *enemy_bullet = al_load_bitmap ("/home/dsbd/prog2/A3/sprites/virusBullet.png");
+
 
 
 	enum Direction {right , left};
@@ -191,13 +168,13 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 
 	
 
-	struct player *p = player_create (105, 220, 20, player_sprite); // Cria o player, que vai ser usado no jogo
-	struct player *e1 = player_create (800, 220, 3, enemy1_sprite);
-	struct player *e2 = player_create (50, 220, 3, enemy1_sprite);
-	struct player *e3 = player_create (800, 220, 3, enemy1_sprite);
-	struct player *e4 = player_create (50, 220, 3, enemy1_sprite);
-	struct player *e5 = player_create (700, 220, 3, enemy1_sprite);
-	struct player *e6 = player_create (800, 220, 3, enemy1_sprite);
+	struct player *p  = player_create (105, 220, 20, player_sprite, player_bullet); // Cria o player, que vai ser usado no jogo
+	struct player *e1 = player_create (800, 220, 3, enemy_sprite, enemy_bullet);
+	struct player *e2 = player_create (50, 220, 3, enemy_sprite, enemy_bullet);
+	struct player *e3 = player_create (800, 220, 3, enemy_sprite, enemy_bullet);
+	struct player *e4 = player_create (50, 220, 3, enemy_sprite, enemy_bullet);
+	struct player *e5 = player_create (700, 220, 3, enemy_sprite, enemy_bullet);
+	struct player *e6 = player_create (800, 220, 3, enemy_sprite, enemy_bullet);
 
 	if (!p || !e1 || !e2 || !e3 || !e4 || !e5 || !e6) return 0;
 
@@ -251,9 +228,6 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 					rolling (p, &x_background);
 				al_draw_bitmap (cenario, x_background, 0, 0);
 
-				if (x_background <= -2500) {
-					al_draw_text(font, al_map_rgb(255, 255, 255), 480, 450, ALLEGRO_ALIGN_CENTER, "PRESSIONE F");
-				}
 
 				// Verifica todos os triggers
 				for (int i = 0; i < num_triggers; i++) {
@@ -262,6 +236,12 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 						printf("Inimigo %d spawnado!\n", i+2); // Debug
 					}
 				}
+
+				if (x_background <= -1700) {
+					al_draw_text(font, al_map_rgb(255, 255, 255), 480, 450, ALLEGRO_ALIGN_CENTER, "FINAL BOSS");
+					al_draw_text(font, al_map_rgb(255, 255, 0), 480, 500, ALLEGRO_ALIGN_CENTER, "PRESSIONE F");
+				}
+
 
 				// Processa inimigos spawnados
 				for (int i = 0; i < num_triggers; i++) {
@@ -273,9 +253,14 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 							bullet_move(&triggers[i].enemy->gun->shots, triggers[i].enemy->gun->bullet_sprite);
 						}
 						
+						num_sprite = witch_virus (triggers[i].enemy);
+
+						coluna =  ((num_sprite * al_get_bitmap_width(p->sprite) / 7));		// Calcula qual sprite pegar
+						linha = 89;	// De qual linha (virado pra direita ou esquerda)
+					
 						al_draw_scaled_bitmap(
 							triggers[i].enemy->sprite, 
-							coluna, linha, 
+							triggers[i].enemy->last_direction, linha, 
 							440, 525,
 							triggers[i].enemy->x, triggers[i].enemy->y, 
 							220, 262.5, 
@@ -294,7 +279,7 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 				}
 
 				if (e1 && e1->active && check_kill(p, e1) == 2) {
-					destroy_player(&e1);
+					destroy_player(e1);
 					// Atualiza triggers
 					for (int i = 0; i < num_triggers; i++) {
 						if (triggers[i].enemy == e1) {
@@ -304,7 +289,7 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 				}
 
 				if (e2 && e2->active && check_kill(p, e2) == 2) {
-					destroy_player(&e2);
+					destroy_player(e2);
 					// Atualiza triggers
 					for (int i = 0; i < num_triggers; i++) {
 						if (triggers[i].enemy == e2) {
@@ -314,7 +299,7 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 				}
 
 				if (e3 && e3->active && check_kill(p, e3) == 2) {
-					destroy_player(&e3);
+					destroy_player(e3);
 					// Atualiza triggers
 					for (int i = 0; i < num_triggers; i++) {
 						if (triggers[i].enemy == e3) {
@@ -324,7 +309,7 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 				}
 
 				if (e4 && e4->active && check_kill(p, e4) == 2) {
-					destroy_player(&e4);
+					destroy_player(e4);
 					// Atualiza triggers
 					for (int i = 0; i < num_triggers; i++) {
 						if (triggers[i].enemy == e4) {
@@ -334,7 +319,7 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 				}
 
 				if (e5 && e5->active && check_kill(p, e5) == 2) {
-					destroy_player(&e5);
+					destroy_player(e5);
 					// Atualiza triggers
 					for (int i = 0; i < num_triggers; i++) {
 						if (triggers[i].enemy == e5) {
@@ -344,7 +329,7 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 				}
 
 				if (e6 && e6->active && check_kill(p, e6) == 2) {
-					destroy_player(&e6);
+					destroy_player(e6);
 					// Atualiza triggers
 					for (int i = 0; i < num_triggers; i++) {
 						if (triggers[i].enemy == e6) {
@@ -363,8 +348,7 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 				
 
 					num_sprite = wich_sprite (p);
-					draw_hitbox (p, num_sprite, 0);	// Desenha a hitbox do player
-					
+
 					// Lógica do pulo com gravidade!
 					if (p->joystick->up ) jump_f = 1;
 					if (j_vel < -Y_VELOCITY) jump_f = 0;	// Se a velocidade do pulo for menor que -15, desativa o pulo
@@ -399,7 +383,10 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 						// Desenha as sprites das balas
 					if (p->gun->shots) {
 						for (struct bullet *i = p->gun->shots; i != NULL; i = i->next)
-							al_draw_bitmap (i->sprite, i->x, i->y, 0);
+							if (!i->trajectory)
+								al_draw_bitmap (i->sprite, i->x, i->y, 0);
+							else
+								al_draw_bitmap (i->sprite, i->x, i->y, ALLEGRO_FLIP_HORIZONTAL);
 						if (p->gun->timer) p->gun->timer--;
 					}	
 
@@ -419,8 +406,8 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 					// acho que eu poderia adicionar a pausa o jogo bem aqui ***********
 				}
 
-				if (x_background <= -2500 && event.keyboard.keycode == ALLEGRO_KEY_F) {
-
+				if (x_background <= -1700 && event.keyboard.keycode == ALLEGRO_KEY_F) {
+					sair = 3;
 				}
 				
 				// Vai mudar o estado do joystick, mas não necessariamente vai ser aprovado
@@ -448,26 +435,71 @@ int Jogo (ALLEGRO_DISPLAY* disp) {
 	}	
 
 
-
-
-
-
 	// Destrói tudo que criou
 	al_destroy_font(font);
 	al_destroy_timer (timer);
 	al_destroy_event_queue (queue);
 	al_destroy_bitmap (cenario);
 	al_destroy_bitmap (player_sprite);
-	al_destroy_bitmap (enemy1_sprite);
+	al_destroy_bitmap (enemy_sprite);
 
 	return sair;
 }	
 
+
+int Final (ALLEGRO_DISPLAY* disp) {
+	ALLEGRO_TIMER *timer = al_create_timer (1.0 / 60.0);
+	ALLEGRO_FONT *font = al_load_ttf_font("/home/dsbd/prog2/A3/fontes/Pixelmax/Pixelmax-Regular.otf", 40, 0);									//Carrega uma fonte padrão para escrever na tela (é bitmap, mas também suporta adicionar fontes ttf
+	ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue ();
+	ALLEGRO_BITMAP *cenario = al_load_bitmap ("/home/dsbd/prog2/A3/sprites/FINALRolling.png");
+
+	al_start_timer (timer);
+	ALLEGRO_EVENT event;
+
+
+	int sair = 0;
+
+	while (!sair) {
+		al_wait_for_event (queue, &event);
+
+		switch (event.type) {
+			case (ALLEGRO_EVENT_TIMER):
+				al_draw_bitmap (cenario,0 ,0 , 0);
+
+				al_flip_display ();
+				break;
+
+			case (ALLEGRO_EVENT_KEY_DOWN):
+				if (event.keyboard.keycode == ALLEGRO_KEY_ESCAPE)		// Se eu apertar ESC, saio da tela de cenario
+					exit (0);
+
+			case (ALLEGRO_EVENT_DISPLAY_CLOSE):
+				exit(0);
+					
+				break;
+
+
+
+		}
+
+
+	}
+
+
+
+	al_destroy_font(font);															//Destrutor da fonte padrão
+	al_destroy_bitmap (cenario);													// Destrutor de sprites
+	al_destroy_timer (timer);
+	al_destroy_event_queue (queue);
+
+
+}
+
 int GameOver (ALLEGRO_DISPLAY* disp) {
 	ALLEGRO_TIMER *timer = al_create_timer (1.0 / 60.0);
-	ALLEGRO_FONT *font = al_load_ttf_font("/Users/sebas/Documents/Prog2/A3/fontes/Pixelmax/Pixelmax-Regular.otf", 40, 0);									//Carrega uma fonte padrão para escrever na tela (é bitmap, mas também suporta adicionar fontes ttf
+	ALLEGRO_FONT *font = al_load_ttf_font("/home/dsbd/prog2/A3/fontes/Pixelmax/Pixelmax-Regular.otf", 40, 0);									//Carrega uma fonte padrão para escrever na tela (é bitmap, mas também suporta adicionar fontes ttf
 	ALLEGRO_EVENT_QUEUE *queue = al_create_event_queue ();
-	ALLEGRO_BITMAP *cenario = al_load_bitmap ("/Users/sebas/Documents/Prog2/A3/sprites/GameOver.png");
+	ALLEGRO_BITMAP *cenario = al_load_bitmap ("/home/dsbd/prog2/A3/sprites/GameOver.png");
 
 	if (font == NULL || cenario == NULL || timer == NULL || queue == NULL) {
 		fprintf(stderr, "Erro ao carregar a fonte ou bitmap\n");
