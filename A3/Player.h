@@ -25,6 +25,7 @@ struct player {
   ALLEGRO_BITMAP *sprite;   // Foto do jogador
 };
 
+void move_boss(struct player *enemy, struct player *p, int *state, float *timer);
 
 void move_enemy(struct player *enemy, struct player *p, int *state, float *timer);
 
@@ -49,7 +50,7 @@ void move_player (struct joystick *element, ALLEGRO_EVENT event);
 // Cria uma nova bala dentro da lista de balas
 struct bullet *player_shot (struct player *p);
 
-void destroy_player (struct player *p);
+void destroy_player (struct player **p);
 
 int wich_sprite (struct player *p);
 

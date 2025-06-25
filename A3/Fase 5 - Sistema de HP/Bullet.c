@@ -23,6 +23,6 @@ void bullet_move(bullet *elements){																			//Implementação da funç
 }
 
 void bullet_destroy(bullet *element){																		//Implementação da função "bullet_destroy"
-
 	free(element);																							//Libera a memória da instância de projétil
+	element = NULL;
 }

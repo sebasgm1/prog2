@@ -34,10 +34,6 @@ void pistol_destroy(struct pistol *element) {
         curr = next;
     }
 
-    // Destrói a sprite da bala se for exclusiva desta pistola
-    if (element->bullet_sprite) {
-        al_destroy_bitmap(element->bullet_sprite);
-    }
-
     free(element);
+    element = NULL;  // Evita dangling pointer
 }

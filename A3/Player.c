@@ -1,11 +1,55 @@
 // Mac path: /Users/sebas/Documents/Prog2/A3
 // Linux DSBD path : /home/dsbd/prog2/A3
+// NOVO PC path: /home/sebasitan/Documents/prog2/A3
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "Player.h"
 
+void move_boss(struct player *enemy, struct player *p, int *state, float *timer) {
+  if (!enemy || !enemy->active || !enemy->gun || !p || !p->active) return;
+
+  int speed = ENEMY_VELOCITY + 3; // Velocidade do inimigo
+
+
+  // Atualiza o timer
+  *timer -= 1.0 / 60.0;
+
+  // Alterna entre os estados a cada 0.5 segundo
+  if (*timer <= 0.5) {
+    check_collision (enemy, p);
+
+    *state = (*state == 0) ? 1 : 0; // Alterna entre andar (0) e atirar (1)
+    *timer = 1.0; // Reseta o timer para 1 segundo
+  }
+
+  // Comportamento baseado no estado
+  if (*state == 0) { // Estado: andar
+    if (enemy->x > p->x) { // Inimigo está à direita e deve ir para a esquerda
+      enemy->x -= speed;
+      enemy->joystick->right = 0;
+      enemy->joystick->left = 1;
+    } else {
+      enemy->x += speed; // Move o inimigo na direção do jogador
+      enemy->joystick->right = 1;
+      enemy->joystick->left = 0;
+    }      
+    enemy->joystick->fire = 0; // Não atira enquanto anda
+  } 
+  else if (*state == 1) { // Estado: atirar
+    enemy->joystick->fire = 1; // Atira
+    if (enemy->joystick->fire && !enemy->gun->timer) {
+      enemy->gun->shots = player_shot(enemy); // Cria uma bala
+      enemy->gun->timer = GUN_COOLDOWN;  // Define o cooldown da arma
+    }
+  }
+
+  // Atualiza o cooldown da arma
+  if (enemy->gun->timer) {
+      enemy->gun->timer--;
+  }
+}
 
 void move_enemy(struct player *enemy, struct player *p, int *state, float *timer) {
   if (!enemy || !enemy->active || !enemy->gun || !p || !p->active) return;
@@ -229,23 +273,24 @@ struct player *player_create (float x, float y, long life, ALLEGRO_BITMAP *sprit
 struct bullet *player_shot (struct player *p) {
 
   if (!p) {
-          fprintf(stderr, "Erro: ponteiro do jogador é NULL\n");
-          return NULL;
-      }
-      if (!p->active) {
-          fprintf(stderr, "Erro: jogador está inativo\n");
-          return NULL;
-      }
-      if (!p->gun) {
-          fprintf(stderr, "Erro: arma do jogador é NULL\n");
-          return NULL;
-      }
-      if (!p->joystick) {
-          fprintf(stderr, "Erro: joystick do jogador é NULL\n");
-          return NULL;
-      }
-      if (!p->gun->bullet_sprite) {
-          fprintf(stderr, "Erro: sprite da bala não carregada\n");
+      fprintf(stderr, "Erro: ponteiro do jogador é NULL\n");
+      return NULL;
+  }
+  if (!p->active) {
+      fprintf(stderr, "Erro: jogador está inativo\n");
+      return NULL;
+  }
+  if (!p->gun) {
+      fprintf(stderr, "Erro: arma do jogador é NULL\n");
+      return NULL;
+  }
+  if (!p->joystick) {
+      fprintf(stderr, "Erro: joystick do jogador é NULL\n");
+      return NULL;
+  }
+  if (!p->gun->bullet_sprite) {
+      fprintf(stderr, "Erro: sprite da bala não carregada\n");
+      return NULL;
   }
 
   // if (!p || !p->active || !p->gun || !p->joystick || !p->gun->bullet_sprite) {
@@ -276,27 +321,23 @@ struct bullet *player_shot (struct player *p) {
 }
 
 
-void destroy_player(struct player *p) {
-  if (!p) return;
+void destroy_player(struct player **p) {
+  if (!p || !*p) return;
 
-  // Marca como inativo
-  p->active = 0;
+  (*p)->active = 0;
 
-  // Destrói a pistola (incluindo balas)
-  if (p->gun) {
-      pistol_destroy(p->gun);
-      p->gun = NULL;
+  if ((*p)->gun) {
+    pistol_destroy((*p)->gun);
+    (*p)->gun = NULL;
   }
 
-  // Destrói o joystick
-  if (p->joystick) {
-      destroy_joystick(p->joystick);
-      p->joystick = NULL;
+  if ((*p)->joystick) {
+    destroy_joystick((*p)->joystick);
+    (*p)->joystick = NULL;
   }
 
-
-  free(p);
-  p = NULL;
+  free(*p);
+  *p = NULL;  // Isso é crucial!
 }
 
 int wich_sprite (struct player *p) {
@@ -336,6 +377,9 @@ int wich_sprite (struct player *p) {
 } 
 
 int witch_virus (struct player *p) {
+  if (!p || !p->sprite) return 2;
+
+
   int num_sprite = 2;
 
   if (p->joystick->right && p->joystick->left) {
